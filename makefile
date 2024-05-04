@@ -7,6 +7,9 @@ all: bin/mc_lib.a(src/mc_dt.o src/mc_pkt.o src/mc_nbt.o) bin/srv bin/cli bin/nbt
 clean:
 	rm -rf bin/* src/*.o
 
+bin:
+	mkdir bin
+
 bin/srv: app/srv.c bin/mc_lib.a
 	${CC} ${CFLAGS} $^ -o $@
 
