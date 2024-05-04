@@ -111,13 +111,13 @@ WRITE_ALL(keep_alive, (int64_t ch),
 	(int64_t, ch)
 )
 
-WRITE_ALL(chunk_data, (int32_t x, int32_t z, struct mc_chunk chunk),
+WRITE_ALL(chunk_data, (void *cb, int32_t (*ca)(void *cb, int32_t x, int32_t y, int32_t z), int32_t x, int32_t z),
 	(VarInt, 0x24)
 	(int32_t, x)
 	(int32_t, z)
 
 	(nbt_tag, NBT_TAG_COMPOUND("", 0)) //TODO heightmap
-	(mc_chunk, chunk)
+	(mc_chunk, cb, ca, x, z)
 
 	(VarInt, 0)
 	(uint8_t, 0)

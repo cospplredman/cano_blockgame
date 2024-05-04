@@ -159,10 +159,51 @@ void write_nbt_tag(void *fb, int (*fn)(void *fb, int val), struct nbttag tag){
 			write_nbt_tag(fb, fn, tag.tag[i]);
 		}break;
 	case NBT_TAG_COMPOUND: {
-		struct nbttag *cur = &tag;
 		for(size_t i = 0; i < tag.len; i++)
 			write_nbt_tag(fb, fn, tag.tag[i]);
 		write_nbt_tag(fb, fn, (struct nbttag){.type = NBT_TAG_END, .tag_name = MC_STR(NULL)});
+		}break;
+	default: {
+		}break;
+	}
+}
+
+
+void free_nbt_tag(struct nbttag tag){
+	if(tag.tag_name.str != NULL){
+		free_mc_string(tag.tag_name);
+	}
+
+	switch(tag.type){
+	case NBT_TAG_END: {
+		}break;
+	case NBT_TAG_BYTE: {
+		}break;
+	case NBT_TAG_SHORT: {
+		}break;
+	case NBT_TAG_INT: {
+		}break;
+	case NBT_TAG_LONG: {
+		}break;
+	case NBT_TAG_FLOAT: {
+		}break;
+	case NBT_TAG_DOUBLE: {
+		}break;
+	case NBT_TAG_BYTE_ARRAY: {
+		free(tag.byte);
+		}break;
+	case NBT_TAG_STRING: {
+		free_mc_string(tag.String);
+		}break;
+	case NBT_TAG_LIST: {
+		for(size_t i = 0; i < tag.len; i++)
+			free_nbt_tag(tag.tag[i]);
+		free(tag.tag);
+		}break;
+	case NBT_TAG_COMPOUND: {
+		for(size_t i = 0; i < tag.len; i++)
+			free_nbt_tag(tag.tag[i]);
+		free(tag.tag);
 		}break;
 	default: {
 		}break;

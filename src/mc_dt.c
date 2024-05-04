@@ -230,11 +230,14 @@ struct mc_string read_mc_string(void *fb, int (*fn)(void *fn)){
 	return (struct mc_string){str, len}; //TODO free
 }
 
-
 void write_mc_string(void *fb, int (*fn)(void *fb, int val), struct mc_string str){
 	write_VarInt(fb, fn, str.len);
 	for(size_t i = 0; i < str.len; i++)
 		fn(fb, str.str[i]);
+}
+
+void free_mc_string(struct mc_string str){
+	free(str.str);
 }
 
 struct mc_uuid read_mc_uuid(void *fb, int (*fn)(void *fn)){
@@ -266,11 +269,18 @@ void write_mc_bitset(void *fb, int (*fn)(void *fb, int val), struct mc_bitset bi
 		write_int64_t(fb, fn, bitset.data[i]);
 }
 
-void write_mc_subchunk(void *fb, int (*fn)(void *fb, int val), struct mc_subchunk *sub){
+void free_mc_bitset(struct mc_bitset bitset){
+	free(bitset.data);
+}
+
+void write_mc_subchunk(void *fb, int (*fn)(void *fb, int val), void *cb, int32_t (*ca)(void *cb, int32_t x, int32_t y, int32_t z), int32_t cx, int32_t cy, int32_t cz){
 	size_t block_count = 0;
 
+	int64_t x = ((int64_t)cx) * 16;
+	int64_t y = ((int64_t)cy) * 16;
+	int64_t z = ((int64_t)cz) * 16;
 	for(size_t i = 0; i < 4096; i++)
-		if(sub->block[i] != 0)
+		if(ca(cb, x + ((i >> 0) & 0xf), y + ((i >> 8) & 0xf), z + ((i >> 4) & 0xf)) != 0)
 			block_count++;
 
 	write_int16_t(fb, fn, block_count);
@@ -290,7 +300,8 @@ void write_mc_subchunk(void *fb, int (*fn)(void *fb, int val), struct mc_subchun
 	size_t offset = 0;
 	int32_t mask = (1 << (bits + 1)) - 1;
 	for(size_t i = 0; i < 4096; i++){
-		buf |= ((uint64_t)(sub->block[i] & mask)) << offset;
+		int32_t block = ca(cb, x + ((i >> 0) & 0xf), y + ((i >> 8) & 0xf), z + ((i >> 4) & 0xf));
+		buf |= ((uint64_t)(block & mask)) << offset;
 		offset += bits;
 
 		if(64 < bits + offset){
@@ -312,15 +323,15 @@ static int inc(void *fb, int val){
 	((size_t *)fb)[0]++;
 }
 
-void write_mc_chunk(void *fb, int (*fn)(void *fb, int val), struct mc_chunk chunk){
+void write_mc_chunk(void *fb, int (*fn)(void *fb, int val), void *cb, int32_t (*ca)(void *cb, int32_t x, int32_t y, int32_t z), int32_t cx, int32_t cz){
 	size_t len = 0;
-	for(size_t i = 0; i < chunk.len; i++)
-		write_mc_subchunk(&len, inc, chunk.sub + i);
+	for(size_t i = 0; i < 16; i++)
+		write_mc_subchunk(&len, inc, cb, ca, cx, i, cz);
 
 	printf("length: %lu\n", len);
 	write_VarInt(fb, fn, len);
-	for(size_t i = 0; i < chunk.len; i++)
-		write_mc_subchunk(fb, fn, chunk.sub + i);
+	for(size_t i = 0; i < 16; i++)
+		write_mc_subchunk(fb, fn, cb, ca, cx, i, cz);
 
 }
 

@@ -50,14 +50,16 @@ int64_t read_VarLong(void *fb, int (*fn)(void *fn));
 void write_VarInt(void *fb, int (*fn)(void *fb, int val) , int32_t value);
 void write_VarLong(void *fb, int (*fn)(void *fb, int val), int64_t value);
 
-struct mc_string read_mc_string(void *fb, int (*fn)(void *fn));
+[[nodiscard]] struct mc_string read_mc_string(void *fb, int (*fn)(void *fn));
+void free_mc_string(struct mc_string str);
 void write_mc_string(void *fb, int (*fn)(void *fb, int val), struct mc_string str);
 
 
 struct mc_uuid read_mc_uuid(void *fb, int (*fn)(void *fn));
 void write_mc_uuid(void *fb, int (*fn)(void *fb, int val), struct mc_uuid uuid);
 
-struct mc_bitset read_mc_bitset(void *fb, int (*fn)(void *fn));
+[[nodiscard]] struct mc_bitset read_mc_bitset(void *fb, int (*fn)(void *fn));
+void free_mc_bitset(struct mc_bitset bitset);
 void write_mc_bitset(void *fb, int (*fn)(void *fb, int val), struct mc_bitset bitset);
 
 
@@ -71,7 +73,7 @@ struct mc_chunk{
 	struct mc_subchunk *sub;
 };
 
-void write_mc_subchunk(void *fb, int (*fn)(void *fb, int val), struct mc_subchunk *sub);
-void write_mc_chunk(void *fb, int (*fn)(void *fb, int val), struct mc_chunk chunk);
+void write_mc_subchunk(void *fb, int (*fn)(void *fb, int val), void *cb, int32_t (*ca)(void *cb, int32_t x, int32_t y, int32_t z), int32_t cx, int32_t cy, int32_t cz);
+void write_mc_chunk(void *fb, int (*fn)(void *fb, int val), void *cb, int32_t (*ca)(void *cb, int32_t x, int32_t y, int32_t z), int32_t cx, int32_t cz);
 
 #endif

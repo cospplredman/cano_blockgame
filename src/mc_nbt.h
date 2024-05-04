@@ -53,10 +53,10 @@ struct nbttag {
 #define NBT_TAG_COMPOUND(name, l, ...) ((struct nbttag){.tag_name = MC_STR(name), .type = NBT_TAG_COMPOUND, .len = l, .tag = (struct nbttag[]){__VA_ARGS__}})
 
 
-struct mc_string read_nbt_string(void *fb, int (*fn)(void *fn));
+[[nodiscard]] struct mc_string read_nbt_string(void *fb, int (*fn)(void *fn));
 void write_nbt_string(void *fb, int (*fn)(void *fn, int val), struct mc_string str);
 void write_nbt_tag(void *fb, int (*fn)(void *fn, int val), struct nbttag str);
-struct nbttag read_nbt_tag(void *fb, int (*fn)(void *fn));
-static struct nbttag read_nbt_unamed_tag(void *fb, int (*fn)(void *fn), uint8_t type);
+[[nodiscard]] struct nbttag read_nbt_tag(void *fb, int (*fn)(void *fn));
+[[nodiscard]] static struct nbttag read_nbt_unamed_tag(void *fb, int (*fn)(void *fn), uint8_t type);
 
 #endif

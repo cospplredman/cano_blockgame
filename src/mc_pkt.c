@@ -16,9 +16,9 @@ static size_t VarIntLen(int32_t val){
 	return end - buf;
 }
 
-#define OP(a, b) write_##a ((void*)&end, buf_putchar, b)
-#define $_(a, b) OP (a, b); $
-#define $(a, b) OP (a, b); $_
+#define OP(a, ...) write_##a ((void*)&end, buf_putchar, __VA_ARGS__)
+#define $_(a, ...) OP (a, __VA_ARGS__); $
+#define $(a, ...) OP (a, __VA_ARGS__); $_
 
 #define ADD_ARGS(...) (void *fb, int (*fn)(void *fb, int val) __VA_OPT__(,) __VA_ARGS__)
 #define WRITE_ALL(name, args, rst) void write_##name ADD_ARGS args {\

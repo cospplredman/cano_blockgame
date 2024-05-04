@@ -59,17 +59,14 @@ static struct mc_string motd = MC_STR(STR(
 }
 ));
 
+
+
+
+
 void sigint_handler(int signum) {
 	signal(SIGINT, sigint_handler);
 	flag_die = 1;
 }
-
-
-enum {
-	STATUS = 1,
-	LOGIN = 2,
-	PLAY = 3
-};
 
 struct mc_client{
 	int32_t state;
@@ -81,6 +78,28 @@ struct mc_client{
 	struct mc_uuid uuid;
 	struct mc_string name;
 };
+
+
+int32_t world_fn(void *a, int32_t x, int32_t y, int32_t z){
+	double rn = (double)rand() / (double)RAND_MAX;
+	if(rn < 0.1)
+		return 1;
+	return 0;
+}
+
+void push_world_data(struct ntwk_peer *peer){
+	struct mc_client *cli = *(struct mc_client**)ntwk_peer_get_data(peer);
+
+	int32_t cx = (int32_t)(cli->x/16), cz = (int32_t)(cli->z/16);
+
+	write_center_chunk(peer, peer_putchar, cx, cz);
+	write_set_render_dist(peer, peer_putchar, 32);
+	for(int32_t i = -5; i < 6; i++)
+		for(int32_t j = -5; j < 6; j++)
+			write_chunk_data(peer, peer_putchar, NULL, world_fn, cx + i, cz + j);
+	
+}
+
 
 void on_packet(struct ntwk_conf *conf, struct ntwk_peer *peer){
 	struct mc_client *cli = *(struct mc_client**)ntwk_peer_get_data(peer);
@@ -94,7 +113,7 @@ void on_packet(struct ntwk_conf *conf, struct ntwk_peer *peer){
 		switch(packet_id){
 		case 0: { //handshake
 			printf("protocol version %d\n", read_VarInt(peer, peer_getc));
-			read_mc_string(peer, peer_getc); //server address
+			free_mc_string(read_mc_string(peer, peer_getc)); //server address
 			read_uint16_t(peer, peer_getc); //server port
 			int32_t state = read_VarInt(peer, peer_getc);
 			cli->state = state;
@@ -150,11 +169,7 @@ void on_packet(struct ntwk_conf *conf, struct ntwk_peer *peer){
 			write_set_default_spawn_position(peer, peer_putchar, 0, 0, 0, 0);
 			write_player_info_update(peer, peer_putchar, cli->name, cli->uuid);
 
-			write_center_chunk(peer, peer_putchar, 0, 0);
-			write_set_render_dist(peer, peer_putchar, 32);
-			for(int i = -2; i < 3; i++)
-				for(int j = -2; j < 3; j++)
-					write_chunk_data(peer, peer_putchar, i, j, chunk);
+			push_world_data(peer);
 			}break;
 		default: {
 			printf("unexpected packet\n"); 
@@ -175,6 +190,7 @@ void on_packet(struct ntwk_conf *conf, struct ntwk_peer *peer){
 		case 0x08: { //client information
 			printf("client information:");
 			struct mc_string str = read_mc_string(peer, peer_getc);
+			free_mc_string(str);
 			printf("locale %.*s\n", str.len, str.str);
 			printf("view dist %d\n", read_uint8_t(peer, peer_getc));
 			printf("chat mode %d\n", read_VarInt(peer, peer_getc));
@@ -308,6 +324,7 @@ int main(){
 	
 
 	double time = get_time();
+	double tick = time;
 	while(1){
 		ntwk_handle_events(conf);
 		
@@ -318,6 +335,14 @@ int main(){
 			for(int i = 0; i < peers; i++)
 				write_keep_alive(&(peer[i]), peer_putchar, 77);
 			time = get_time();
+		}
+
+		if(tick - time > 0.1){
+			size_t peers;
+			struct ntwk_peer *peer = ntwk_get_peers(conf, &peers);
+			for(int i = 0; i < peers; i++)
+				push_world_data(&(peer[i]));
+			tick = get_time();
 		}
 
 		if(flag_die)
