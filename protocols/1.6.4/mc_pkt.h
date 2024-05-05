@@ -35,8 +35,7 @@ static size_t VarIntLen(int32_t val){
 	char *end, *dummy, *start; \
 	end = pkt_buf + 4; \
 	$ rst; \
-	dummy = start = pkt_buf + 4 - VarIntLen(end - (pkt_buf + 4)); \
-	write_VarInt((void*)&dummy, buf_putchar, end - (pkt_buf + 4)); \
+	dummy = start = pkt_buf + 4; \
 	while(start < end) \
 		fn(fb, *(start++)); \
 }

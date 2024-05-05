@@ -5,29 +5,55 @@
 #include"mc_pkt.h"
 
 static int peer_getc(void *p){
-	return ntwk_getc((struct ntwk_peer*)p);
+	int cur_char = ntwk_getc((struct ntwk_peer*)p);
+
+	printf("%c", cur_char);
+	return cur_char;
 }
 
 static int peer_putchar(void *p, int v){
 	return ntwk_putchar((struct ntwk_peer*)p, v);
 }
 
+//TODO store first few packets and parse them in both the old and new formats to see which fails
 void handle_events0(struct ntwk_conf *conf, struct ntwk_peer *peer){
 	struct mc_player *cli = *(struct mc_player**)ntwk_peer_get_data(peer);
 
 	int32_t pkt_len = read_VarInt(peer, peer_getc);
 
 	if(pkt_len == 254){
-		printf("hello?\n");
-		cli->protocol = 78;
+		printf("0: 0x%x\n", read_uint8_t(peer, peer_getc)); //0xfa plugin message
+		free_mc_utf16(read_mc_utf16(peer, peer_getc)); //MC|PingHost
+		read_int16_t(peer, peer_getc); //length of data
+		cli->protocol = read_uint8_t(peer, peer_getc); //protocol version
+		free_mc_utf16(read_mc_utf16(peer, peer_getc)); //host name
+		read_uint32_t(peer, peer_getc); //host port
+		
 		write_uint8_t(peer, peer_putchar, 0xff); //legacy kick
-
-		write_int16_t(peer, peer_putchar, 21);
-		wchar_t motd[] = L"Cano Block game§0§255";
-
-		for(int i = 0; i < sizeof(motd)-1; i++)
-			write_uint16_t(peer, peer_putchar, motd[i]);
+		
+		//TODO lie about protocol version or add server list ping to exposed protocol functionality
+		write_mc_utf16(peer, peer_putchar, (struct mc_utf16){.str = u"§1\00078\000cano\000Cano Block game\0000\000255", .len = 32, .code_points = 32});
 		return;
+	}
+
+	if(pkt_len == 2){
+		free_mc_string(cli->name);
+
+		cli->protocol = read_uint8_t(peer, peer_getc); //protocol version
+		struct mc_utf16 name = read_mc_utf16(peer, peer_getc);
+
+		if(name.code_points != name.len)
+			printf("unexpected code points");
+
+		cli->name.str = malloc(name.code_points);
+		cli->name.len = name.code_points;
+		for(size_t i = 0; i < name.code_points; i++){
+			cli->name.str[i] = name.str[i];
+		}
+
+		free_mc_utf16(read_mc_utf16(peer, peer_getc)); //server host
+		read_int32_t(peer, peer_getc); //server port
+		return;		
 	}
 
 	size_t pkt_start = ntwk_peer_recvd(peer);

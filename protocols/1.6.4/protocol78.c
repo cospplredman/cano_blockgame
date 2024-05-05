@@ -25,13 +25,20 @@ void handle_events78(struct ntwk_conf *conf, struct ntwk_peer *peer){
 
 	uint8_t packet_id = read_uint8_t(peer, peer_getc);
 
+	if(cli->state == 0){
+		cli->state = 1;
+		write_login_request(peer, peer_putchar);
+	}
+
+	printf("78: packet id: 0x%x\n", packet_id);
+
 	switch(packet_id){
 	case 0x00: {//Keep Alive
 		read_int32_t(peer, peer_getc);
 		} break;
 	case 0x01: { //login request (sent by modded clients)
 		read_uint32_t(peer, peer_getc);
-		free_mc_string(read_nbt_string(peer, peer_getc));
+		free_mc_utf16(read_mc_utf16(peer, peer_getc));
 		read_uint8_t(peer, peer_getc);
 		read_uint8_t(peer, peer_getc);
 		read_uint8_t(peer, peer_getc);
@@ -42,13 +49,22 @@ void handle_events78(struct ntwk_conf *conf, struct ntwk_peer *peer){
 		free_mc_string(cli->name);
 
 		cli->protocol = read_uint8_t(peer, peer_getc); //protocol version
-		cli->name = read_nbt_string(peer, peer_getc);
+		struct mc_utf16 name = read_mc_utf16(peer, peer_getc);
 
-		free_mc_string(read_nbt_string(peer, peer_getc)); //server host
+		if(name.code_points != name.len)
+			printf("unexpected code points");
+
+		cli->name.str = malloc(name.code_points);
+		cli->name.len = name.code_points;
+		for(size_t i = 0; i < name.code_points; i++){
+			cli->name.str[i] = name.str[i];
+		}
+
+		free_mc_utf16(read_mc_utf16(peer, peer_getc)); //server host
 		read_int32_t(peer, peer_getc); //server port
 		} break;
 	case 0x03: { //chat message
-		free_mc_string(read_nbt_string(peer, peer_getc));
+		free_mc_utf16(read_mc_utf16(peer, peer_getc));
 		} break;
 	case 0x07: {
 		read_int32_t(peer, peer_getc); // user
@@ -142,10 +158,10 @@ void handle_events78(struct ntwk_conf *conf, struct ntwk_peer *peer){
 		read_int32_t(peer, peer_getc); //x
 		read_int16_t(peer, peer_getc); //y
 		read_int32_t(peer, peer_getc); //z
-		free_mc_string(read_nbt_string(peer, peer_getc)); //line 1
-		free_mc_string(read_nbt_string(peer, peer_getc)); //line 2
-		free_mc_string(read_nbt_string(peer, peer_getc)); //line 3
-		free_mc_string(read_nbt_string(peer, peer_getc)); //line 4
+		free_mc_utf16(read_mc_utf16(peer, peer_getc)); //line 1
+		free_mc_utf16(read_mc_utf16(peer, peer_getc)); //line 2
+		free_mc_utf16(read_mc_utf16(peer, peer_getc)); //line 3
+		free_mc_utf16(read_mc_utf16(peer, peer_getc)); //line 4
 		} break;
 	case 0xca: { //player abilities
 		read_uint8_t(peer, peer_getc); // flags
@@ -153,10 +169,10 @@ void handle_events78(struct ntwk_conf *conf, struct ntwk_peer *peer){
 		read_float(peer, peer_getc); // walking speed
 		} break;
 	case 0xcb: { //tab complete
-		free_mc_string(read_nbt_string(peer, peer_getc)); // text
+		free_mc_utf16(read_mc_utf16(peer, peer_getc)); // text
 		} break;
 	case 0xcc: { //client settings
-		free_mc_string(read_nbt_string(peer, peer_getc)); // locale
+		free_mc_utf16(read_mc_utf16(peer, peer_getc)); // locale
 		read_uint8_t(peer, peer_getc); // view distance
 		read_uint8_t(peer, peer_getc); // chat flags
 		read_uint8_t(peer, peer_getc); // difficulty
@@ -166,25 +182,27 @@ void handle_events78(struct ntwk_conf *conf, struct ntwk_peer *peer){
 		read_uint8_t(peer, peer_getc); // payload
 		} break;
 	case 0xfa: { //plugin message
-		free_mc_string(read_nbt_string(peer, peer_getc)); // channel
+		free_mc_utf16(read_mc_utf16(peer, peer_getc)); // channel
 		free_mc_string(read_nbt_string(peer, peer_getc)); // data
 		} break;
 	case 0xfc: { // encryption key response
-		free_mc_string(read_nbt_string(peer, peer_getc)); // shared secret
-		free_mc_string(read_nbt_string(peer, peer_getc)); // verify token response
+		free_mc_utf16(read_mc_utf16(peer, peer_getc)); // shared secret
+		free_mc_utf16(read_mc_utf16(peer, peer_getc)); // verify token response
 		} break;
 	case 0xfe: { //	server list ping
 		read_uint8_t(peer, peer_getc); //magic byte
 		} break;
 	case 0xff: { //disconnect/kick
-		free_mc_string(read_nbt_string(peer, peer_getc)); // reason
+		free_mc_utf16(read_mc_utf16(peer, peer_getc)); // reason
 		ntwk_disconnect_peer(conf, peer);
 		} break;
 	}
 }
 
 void disconnect78(struct ntwk_conf *conf, struct ntwk_peer *peer, char *reason){
-	write_disconnect(peer, peer_putchar, (struct mc_string){.str = reason, .len = strlen(reason)});
+	struct mc_utf16 str = mc_astr_to_utf16((struct mc_string){.str = reason, .len = strlen(reason)});
+	write_disconnect(peer, peer_putchar, str);
+	free_mc_utf16(str);
 	ntwk_disconnect_peer(conf, peer);
 }
 

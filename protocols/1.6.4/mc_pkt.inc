@@ -8,7 +8,7 @@ WRITE_ALL(keep_alive, (int32_t id),
 WRITE_ALL(login_request, (),
 	(uint8_t, 0x01)
 	(int32_t, 0) //eid
-	(mc_string, MC_STR("default")) // level type
+	(mc_utf16, ((struct mc_utf16){.str = u"default", .len = 7, .code_points = 7})) // level type
 	(uint8_t, 1) //gamemode
 	(uint8_t, 0) // Dimension
 	(uint8_t, 0) //difficulty
@@ -32,9 +32,9 @@ WRITE_ALL(teleport, (int32_t eid, int32_t x, int32_t y, int32_t z, float pitch, 
 	(float, pitch)
 )
 
-WRITE_ALL(disconnect, (struct mc_string reason),
+WRITE_ALL(disconnect, (struct mc_utf16 reason),
 	(uint8_t, 0xff)
-	(mc_string, reason)
+	(mc_utf16, reason)
 )
 
 /*

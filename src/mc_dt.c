@@ -240,21 +240,35 @@ void free_mc_string(struct mc_string str){
 	free(str.str);
 }
 
+struct mc_utf16 mc_astr_to_utf16(struct mc_string str){
+	struct mc_utf16 ret;
+	ret.str = malloc(str.len * sizeof(uint16_t));
+	for(size_t i = 0; i < str.len; i++)
+		ret.str[i] = str.str[i];
+	return ret;
+}
 
 struct mc_utf16 read_mc_utf16(void *fb, int (*fn)(void *fn)){
-	size_t len = read_int16_t(fb, fn);
-	uint16_t *str = malloc(sizeof(uint16_t) * (len+1));
-	str[len] = 0;
-	for(size_t i = 0; i < len; i++)
-		str[i] = read_uint16_t(fb, fn); //TODO deal with utf16
+	size_t code_points = read_int16_t(fb, fn);
+	size_t len = 0;
+	uint16_t *str = malloc(sizeof(uint16_t) * code_points * 2);
+	for(size_t i = 0; i < code_points; i++){
+		str[len] = read_uint16_t(fb, fn);
+		if((str[len] & 0xd800) == 0xd8000){ //TODO this is dumb
+			len++;
+			str[len] = read_uint16_t(fb, fn);
+		}
+		len++;
+	}
 
+	str = realloc(str, len * sizeof(uint16_t));
 	return (struct mc_utf16){.str = str, .len = len, .code_points = len}; //TODO free
 }
 
 void write_mc_utf16(void *fb, int (*fn)(void *fb, int val), struct mc_utf16 str){
-	write_VarInt(fb, fn, str.len);
+	write_int16_t(fb, fn, str.code_points);
 	for(size_t i = 0; i < str.len; i++)
-		write_uint16_t(fb, fn, str.str[i]); //TODO deal with utf16
+		write_uint16_t(fb, fn, str.str[i]);
 }
 
 void free_mc_utf16(struct mc_utf16 str){

@@ -97,6 +97,8 @@ void handle_events762(struct ntwk_conf *conf, struct ntwk_peer *peer){
 
 			cli->state = 3;
 			cli->uuid = (struct mc_uuid){.low = rand(), .high = 57};
+
+			free_mc_string(cli->name);
 			cli->name = username;
 
 			char *end, *dummy, *start;

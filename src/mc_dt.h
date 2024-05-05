@@ -60,6 +60,7 @@ void write_VarLong(void *fb, int (*fn)(void *fb, int val), int64_t value);
 void free_mc_string(struct mc_string str);
 void write_mc_string(void *fb, int (*fn)(void *fb, int val), struct mc_string str);
 
+[[nodiscard]] struct mc_utf16 mc_astr_to_utf16(struct mc_string str);
 [[nodiscard]] struct mc_utf16 read_mc_utf16(void *fb, int (*fn)(void *fn));
 void free_mc_utf16(struct mc_utf16 str);
 void write_mc_utf16(void *fb, int (*fn)(void *fb, int val), struct mc_utf16 str);

@@ -59,8 +59,8 @@ static struct mc_string motd = MC_STR(STR(
 
 void sigint_handler(int signum) {
 	signal(SIGINT, sigint_handler);
-	signal(SIGTERM, sigint_handler);
-	signal(SIGKILL, sigint_handler);
+	//signal(SIGTERM, sigint_handler);
+	//signal(SIGKILL, sigint_handler);
 	flag_die = 1;
 }
 
@@ -83,8 +83,8 @@ void push_world_data(struct ntwk_peer *peer){
 
 int main(){
 	signal(SIGINT, sigint_handler);
-	signal(SIGTERM, sigint_handler);
-	signal(SIGKILL, sigint_handler);
+	//signal(SIGTERM, sigint_handler);
+	//signal(SIGKILL, sigint_handler);
 	
 	struct ntwk_conf *conf = ntwk_init(
 		25565,
