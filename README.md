@@ -12,3 +12,7 @@ make all
 
 [wiki.vg](https://wiki.vg/Main_Page)
 
+# dependencies
+- the C standard library
+- zlib for compression
+- posix sockets
