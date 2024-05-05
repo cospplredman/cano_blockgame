@@ -7,12 +7,31 @@
 #include"mc_dt.h"
 #include"mc_nbt.h"
 #include"mc_pkt.h"
+#include"mc_zlib.h"
 
 static int peer_getc(void *p){
 	return ntwk_getc((struct ntwk_peer*)p);
 }
 
+struct buf_info{
+	char *buf;
+	size_t len;
+};
+
+static int buf_getc(void *p){
+	struct buf_info *buf = (struct buf_info*)p;
+
+	if(buf->len == 0)
+		return -1;
+
+	buf->len--;
+	return (uint8_t)*(buf->buf++);
+}
+
+
+
 static int peer_putchar(void *p, int v){
+	//printf("%c", v);
 	return ntwk_putchar((struct ntwk_peer*)p, v);
 }
 
@@ -20,17 +39,22 @@ static int print_putchar(void *p, int val){
 	return putchar(val);
 }
 
+
 void handle_events78(struct ntwk_conf *conf, struct ntwk_peer *peer){
 	struct mc_player *cli = *(struct mc_player**)ntwk_peer_get_data(peer);
-
-	uint8_t packet_id = read_uint8_t(peer, peer_getc);
 
 	if(cli->state == 0){
 		cli->state = 1;
 		write_login_request(peer, peer_putchar);
+
+		write_spawn_position(peer, peer_putchar, 0, 0, 0);
+		write_pos_look(peer, peer_putchar, 0, 0, 0, 0, 0);
 	}
 
+	uint8_t packet_id = read_uint8_t(peer, peer_getc);
+
 	printf("78: packet id: 0x%x\n", packet_id);
+	printf("78: x %f  y %f  z %f\n", cli->x, cli->y, cli->z);
 
 	switch(packet_id){
 	case 0x00: {//Keep Alive
@@ -62,6 +86,8 @@ void handle_events78(struct ntwk_conf *conf, struct ntwk_peer *peer){
 
 		free_mc_utf16(read_mc_utf16(peer, peer_getc)); //server host
 		read_int32_t(peer, peer_getc); //server port
+		
+
 		} break;
 	case 0x03: { //chat message
 		free_mc_utf16(read_mc_utf16(peer, peer_getc));
@@ -220,6 +246,59 @@ void keep_alive78(struct ntwk_peer *peer){
 }
 
 void set_chunk78(struct ntwk_peer *peer, void *cb, int32_t (*ca)(void *cb, int32_t x, int32_t y, int32_t z), int32_t x, int32_t z){
-	//TODO
-	//write_chunk_data(peer, peer_putchar, cb, ca, x, z);
+	struct mc_player *cli = *(struct mc_player**)ntwk_peer_get_data(peer);
+
+	if(cli->state != 1)
+		return;
+
+	//printf("\n\n\n chunk packet start \n\n\n\n");
+	write_uint8_t(peer, peer_putchar, 0x38);
+	write_int16_t(peer, peer_putchar, 0x1);
+
+	size_t ind = 0;
+
+	for(size_t y = 0; y < 16; y++)
+		for(size_t i = 0; i < 4096; i++) //block data
+			pkt_buf[ind++] = ca(cb, x*16 + ((i >> 0) & 0xf), y*16 + ((i >> 8) & 0xf), z*16 + ((i >> 4) & 0xf)) & 0xff;
+	for(size_t y = 0; y < 16; y++)
+		for(size_t i = 0; i < 2048; i++) //block metadata
+			pkt_buf[ind++] = 0;
+
+	for(size_t y = 0; y < 16; y++)
+		for(size_t i = 0; i < 2048; i++) //block light
+			pkt_buf[ind++] = 255;
+
+	for(size_t y = 0; y < 16; y++)
+		for(size_t i = 0; i < 2048; i++) //sky light
+			pkt_buf[ind++] = 0x0;
+
+	for(size_t y = 0; y < 16; y++) {
+		for(size_t i = 0; i < 2048; i++){ //add array
+			int a = (ca(cb, x*16 + ((i << 1) & 0xf), y*16 + ((i >> 7) & 0xf), z*16 + ((i >> 3) & 0xf)) >> 8) & 0xf;
+			int b = (ca(cb, x*16 + ((i << 1) & 0xf) + 1, y*16 + ((i >> 7) & 0xf), z*16 + ((i >> 3) & 0xf)) >> 8)  & 0xf;
+
+			pkt_buf[ind++] = a | (b << 4);
+		}
+	}
+
+	for(size_t i = 0; i < 256; i++) //biome
+		pkt_buf[ind++] = 5;
+
+	struct buf_info inf = {.buf = pkt_buf, .len = ind};
+
+	char compressed_data[(4096 + 2048 + 2048 + 2048 + 2048 + 256 + 16) * 16];
+	char *end = compressed_data;
+	write_deflate(&end, buf_putchar, &inf, buf_getc);
+
+	size_t len = end - compressed_data;
+	write_int32_t(peer, peer_putchar, len);
+	write_uint8_t(peer, peer_putchar, 1);
+
+	for(size_t i = 0; i < len; i++)
+		write_uint8_t(peer, peer_putchar, compressed_data[i]);
+
+	write_int32_t(peer, peer_putchar, x);
+	write_int32_t(peer, peer_putchar, z);
+	write_uint16_t(peer, peer_putchar, 0xffff);
+	write_uint16_t(peer, peer_putchar, 0xffff);
 }

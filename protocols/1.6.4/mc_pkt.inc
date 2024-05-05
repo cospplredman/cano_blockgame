@@ -23,6 +23,17 @@ WRITE_ALL(spawn_position, (int32_t x, int32_t y, int32_t z),
 	(int32_t, z)
 )
 
+WRITE_ALL(pos_look, (double x, double y, double z, float pitch, float yaw),
+	(uint8_t, 0x0d)
+	(double, x)
+	(double, (y+1)) // stance
+	(double, y)
+	(double, z)
+	(float, yaw)
+	(float, pitch)
+	(uint8_t, 0) //on ground
+)
+
 WRITE_ALL(teleport, (int32_t eid, int32_t x, int32_t y, int32_t z, float pitch, float yaw),
 	(uint8_t, 0x22)
 	(int32_t, x)
@@ -37,17 +48,14 @@ WRITE_ALL(disconnect, (struct mc_utf16 reason),
 	(mc_utf16, reason)
 )
 
-/*
-WRITE_ALL(chunk_data, (int32_t x, int32_t z),
+WRITE_ALL(chunk_data_header, (int32_t x, int32_t z),
 	(uint8_t, 0x33)
 	(int32_t, x)
 	(int32_t, z)
 	(uint8_t, 1) //ground up continuous
 	(uint16_t, 0xffff) //included sub chunks
-	(int32_t, ) //compressed size
-	() //compressed data (zlib deflate)
+	(uint16_t, 0xffff) //included additional block data
 )
-*/
 
 WRITE_ALL(set_block, (int32_t x, int32_t y, int32_t z, int32_t block),
 	(uint8_t, 0x35)

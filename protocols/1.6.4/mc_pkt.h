@@ -18,6 +18,7 @@ static int buf_putchar(fb, val)
 	int val;
 {
 	*((*fb)++) = val; //fails when overruns buffer
+	return (uint8_t)val;
 }
 
 static size_t VarIntLen(int32_t val){

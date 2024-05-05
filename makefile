@@ -1,6 +1,6 @@
 
 CC=gcc
-CFLAGS=-lm -o2 -I src/
+CFLAGS=-lm -lz -o2 -I src/
 
 PROTOCOL_SOURCES= $(wildcard protocols/*/*.c)
 MC_LIB_SOURCES= $(wildcard src/*.c)

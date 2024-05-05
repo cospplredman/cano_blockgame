@@ -83,6 +83,7 @@ void push_world_data(struct ntwk_peer *peer){
 
 int main(){
 	signal(SIGINT, sigint_handler);
+	signal(SIGPIPE, SIG_IGN);
 	//signal(SIGTERM, sigint_handler);
 	//signal(SIGKILL, sigint_handler);
 	
