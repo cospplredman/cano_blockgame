@@ -20,6 +20,12 @@ struct mc_string{
 	size_t len;	
 };
 
+struct mc_utf16{
+	uint16_t *str;
+	size_t len;
+	size_t code_points;
+};
+
 void write_file(void *fb, int (*fn)(void *fb, int val), char *path);
 
 uint8_t read_uint8_t(void *fb, int (*fn)(void *fb));
@@ -54,6 +60,9 @@ void write_VarLong(void *fb, int (*fn)(void *fb, int val), int64_t value);
 void free_mc_string(struct mc_string str);
 void write_mc_string(void *fb, int (*fn)(void *fb, int val), struct mc_string str);
 
+[[nodiscard]] struct mc_utf16 read_mc_utf16(void *fb, int (*fn)(void *fn));
+void free_mc_utf16(struct mc_utf16 str);
+void write_mc_utf16(void *fb, int (*fn)(void *fb, int val), struct mc_utf16 str);
 
 struct mc_uuid read_mc_uuid(void *fb, int (*fn)(void *fn));
 void write_mc_uuid(void *fb, int (*fn)(void *fb, int val), struct mc_uuid uuid);
@@ -62,16 +71,6 @@ void write_mc_uuid(void *fb, int (*fn)(void *fb, int val), struct mc_uuid uuid);
 void free_mc_bitset(struct mc_bitset bitset);
 void write_mc_bitset(void *fb, int (*fn)(void *fb, int val), struct mc_bitset bitset);
 
-
-struct mc_subchunk{
-	int32_t block[4096];
-	int32_t biome[64];
-};
-
-struct mc_chunk{
-	size_t len;
-	struct mc_subchunk *sub;
-};
 
 void write_mc_subchunk(void *fb, int (*fn)(void *fb, int val), void *cb, int32_t (*ca)(void *cb, int32_t x, int32_t y, int32_t z), int32_t cx, int32_t cy, int32_t cz);
 void write_mc_chunk(void *fb, int (*fn)(void *fb, int val), void *cb, int32_t (*ca)(void *cb, int32_t x, int32_t y, int32_t z), int32_t cx, int32_t cz);

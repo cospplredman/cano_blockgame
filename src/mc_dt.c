@@ -240,6 +240,32 @@ void free_mc_string(struct mc_string str){
 	free(str.str);
 }
 
+
+struct mc_utf16 read_mc_utf16(void *fb, int (*fn)(void *fn)){
+	size_t len = read_int16_t(fb, fn);
+	uint16_t *str = malloc(sizeof(uint16_t) * (len+1));
+	str[len] = 0;
+	for(size_t i = 0; i < len; i++)
+		str[i] = read_uint16_t(fb, fn); //TODO deal with utf16
+
+	return (struct mc_utf16){.str = str, .len = len, .code_points = len}; //TODO free
+}
+
+void write_mc_utf16(void *fb, int (*fn)(void *fb, int val), struct mc_utf16 str){
+	write_VarInt(fb, fn, str.len);
+	for(size_t i = 0; i < str.len; i++)
+		write_uint16_t(fb, fn, str.str[i]); //TODO deal with utf16
+}
+
+void free_mc_utf16(struct mc_utf16 str){
+	free(str.str);
+}
+
+
+
+
+
+
 struct mc_uuid read_mc_uuid(void *fb, int (*fn)(void *fn)){
 	return (struct mc_uuid){
 		read_uint64_t(fb, fn),
@@ -328,7 +354,6 @@ void write_mc_chunk(void *fb, int (*fn)(void *fb, int val), void *cb, int32_t (*
 	for(size_t i = 0; i < 16; i++)
 		write_mc_subchunk(&len, inc, cb, ca, cx, i, cz);
 
-	printf("length: %lu\n", len);
 	write_VarInt(fb, fn, len);
 	for(size_t i = 0; i < 16; i++)
 		write_mc_subchunk(fb, fn, cb, ca, cx, i, cz);

@@ -1,4 +1,14 @@
-#include"mc_pkt.h"
+#ifndef MC_PKT_HEADER_GUARD
+#define MC_PKT_HEADER_GUARD
+
+#include<arpa/inet.h>
+#include"ntwk.h"
+#include"mc_dt.h"
+#include"mc_nbt.h"
+#include<stdint.h>
+#include<string.h>
+#include<math.h>
+#include<stdlib.h>
 
 static int $, $_;
 static char pkt_buf[1<<22];
@@ -21,7 +31,7 @@ static size_t VarIntLen(int32_t val){
 #define $(a, ...) OP (a, __VA_ARGS__); $_
 
 #define ADD_ARGS(...) (void *fb, int (*fn)(void *fb, int val) __VA_OPT__(,) __VA_ARGS__)
-#define WRITE_ALL(name, args, rst) void write_##name ADD_ARGS args {\
+#define WRITE_ALL(name, args, rst) static void write_##name ADD_ARGS args {\
 	char *end, *dummy, *start; \
 	end = pkt_buf + 4; \
 	$ rst; \
@@ -32,3 +42,4 @@ static size_t VarIntLen(int32_t val){
 }
 
 #include"mc_pkt.inc"
+#endif

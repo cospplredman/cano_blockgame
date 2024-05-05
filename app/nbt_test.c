@@ -2,7 +2,6 @@
 #include<unistd.h>
 #include"ntwk.h"
 #include"mc_dt.h"
-#include"mc_pkt.h"
 #include"mc_nbt.h"
 #include<stddef.h>
 #include<assert.h>

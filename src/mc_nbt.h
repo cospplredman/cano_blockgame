@@ -57,6 +57,6 @@ struct nbttag {
 void write_nbt_string(void *fb, int (*fn)(void *fn, int val), struct mc_string str);
 void write_nbt_tag(void *fb, int (*fn)(void *fn, int val), struct nbttag str);
 [[nodiscard]] struct nbttag read_nbt_tag(void *fb, int (*fn)(void *fn));
-[[nodiscard]] static struct nbttag read_nbt_unamed_tag(void *fb, int (*fn)(void *fn), uint8_t type);
+void free_nbt_tag(struct nbttag tag);
 
 #endif
