@@ -5,7 +5,7 @@ CFLAGS=-lm -o2 -I src/
 PROTOCOL_SOURCES= $(wildcard protocols/*/*.c)
 MC_LIB_SOURCES= $(wildcard src/*.c)
 
-all: bin/mc_lib.a( $(PROTOCOL_SOURCES:.c=.o) $(MC_LIB_SOURCES:.c=.o) ) bin/srv bin/cli bin/nbt_test
+all: bin bin/mc_lib.a( $(PROTOCOL_SOURCES:.c=.o) $(MC_LIB_SOURCES:.c=.o) ) bin/srv bin/cli bin/nbt_test
 
 clean:
 	rm -rf bin/* src/*.o
