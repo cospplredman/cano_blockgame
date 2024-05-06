@@ -64,6 +64,7 @@ void handle_events0(struct ntwk_conf *conf, struct ntwk_peer *peer){
 		switch(packet_id){
 		case 0: { //handshake
 			cli->protocol = read_VarInt(peer, peer_getc);
+			printf("0: got protocol %d\n", cli->protocol);
 			free_mc_string(read_mc_string(peer, peer_getc));
 			read_uint16_t(peer, peer_getc); //server port
 			int32_t state = read_VarInt(peer, peer_getc);

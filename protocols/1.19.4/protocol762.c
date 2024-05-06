@@ -247,5 +247,8 @@ void keep_alive762(struct ntwk_peer *peer){
 }
 
 void set_chunk762(struct ntwk_peer *peer, void *cb, int32_t (*ca)(void *cb, int32_t x, int32_t y, int32_t z), int32_t x, int32_t z){
+	struct mc_player *cli = *(struct mc_player**)ntwk_peer_get_data(peer);
+	if(cli->state != 3)
+		return;
 	write_chunk_data(peer, peer_putchar, cb, ca, x, z);
 }
