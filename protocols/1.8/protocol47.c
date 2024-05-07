@@ -210,10 +210,44 @@ void keep_alive47(struct ntwk_peer *peer){
 }
 
 void set_chunk47(struct ntwk_peer *peer, void *cb, int32_t (*ca)(void *cb, int32_t x, int32_t y, int32_t z), int32_t x, int32_t z){
-	//TODO
-	return;
 	struct mc_player *cli = *(struct mc_player**)ntwk_peer_get_data(peer);
 	if(cli->state != 3)
 		return;
-	//write_chunk_data(peer, peer_putchar, cb, ca, x, z);
+
+
+	//pkt len
+	char *end = pkt_buf;
+	write_VarInt(&end, buf_putchar, 0x21);
+	write_int32_t(&end, buf_putchar, x);
+	write_int32_t(&end, buf_putchar, z);
+	write_uint8_t(&end, buf_putchar, 0x1); //ground up continuous
+	write_uint16_t(&end, buf_putchar, 0xffff);
+
+	write_VarInt(&end, buf_putchar, ((4096 * 2) + 2048 + 2048) * 16 + 256); //chunk data len
+
+	for(size_t y = 0; y < 16; y++)
+		for(size_t i = 0; i < 4096; i++){ //block data
+			uint16_t block = ca(cb, x + ((i >> 0) & 0xf), y + ((i >> 8) & 0xf), z + ((i >> 4) & 0xf));
+
+			block <<= 4;
+
+			write_uint8_t(&end, buf_putchar, block & 0xff);
+			write_uint8_t(&end, buf_putchar, block << 8);
+		}
+	
+	for(size_t y = 0; y < 16; y++)
+		for(size_t i = 0; i < 2048; i++)
+			write_uint8_t(&end, buf_putchar, 0xff);
+
+	for(size_t y = 0; y < 16; y++)
+		for(size_t i = 0; i < 2048; i++)
+			write_uint8_t(&end, buf_putchar, 0xff);
+	
+	for(size_t i = 0; i < 256; i++)
+		write_uint8_t(&end, buf_putchar, 1);
+
+	size_t len = end - pkt_buf;
+	write_VarInt(peer, peer_putchar, len);
+	for(size_t i = 0; i < len; i++)
+		write_uint8_t(peer, peer_putchar, pkt_buf[i]);
 }
