@@ -94,6 +94,8 @@ inline static int ntwk_connect_peer(struct ntwk_conf *conf, char *address, int p
 		return -1;
 	}
 
+	int T = 1;
+	setsockopt(client_fd,SOL_SOCKET,SO_REUSEADDR,&T,sizeof(int));
 
 	if (connect(client_fd, (struct sockaddr*)&addr_in, sizeof(struct sockaddr)) < 0) {
 		//printf("\nConnection Failed \n");
@@ -118,7 +120,6 @@ inline static int ntwk_connect_peer(struct ntwk_conf *conf, char *address, int p
 inline static void ntwk_disconnect_peer(struct ntwk_conf *conf, struct ntwk_peer *peer){
 	conf->on_disconnect(conf, peer);
 	int T = 1;
-	setsockopt(peer->sock,SOL_SOCKET,SO_REUSEADDR,&T,sizeof(int));
 	close(peer->sock);
 
 	for(struct ntwk_peer *p = peer + 1; p < conf->peer + conf->peers; p++)
@@ -143,6 +144,8 @@ inline static struct ntwk_conf *ntwk_init(
 		return NULL;
 	}
 
+	int T = 1;
+	setsockopt(server_socket,SOL_SOCKET,SO_REUSEADDR,&T,sizeof(int));
 	server_address.sin_family = AF_INET;
 	server_address.sin_addr.s_addr = INADDR_ANY;
 	server_address.sin_port = htons(port);
@@ -221,8 +224,6 @@ inline static void ntwk_handle_events(struct ntwk_conf *conf){
 }
 
 inline static void ntwk_deinit(struct ntwk_conf *conf){
-	int T = 1;
-	setsockopt(conf->my_sock,SOL_SOCKET,SO_REUSEADDR,&T,sizeof(int));
 	close(conf->my_sock);
 
 	for(size_t i = 0; i < conf->peers; i++){
