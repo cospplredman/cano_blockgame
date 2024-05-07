@@ -8,10 +8,6 @@
 #include"mc_nbt.h"
 #include"mc_pkt.h"
 
-static struct nbttag RegistryCodec = 
-#include"mc_data/RegistryCodec.inc"
-;
-
 static int peer_getc(void *p){
 	return ntwk_getc((struct ntwk_peer*)p);
 }
@@ -199,7 +195,10 @@ void teleport47(struct ntwk_peer *peer, int32_t x, int32_t y, int32_t z){
 }
 
 void set_block47(struct ntwk_peer *peer, int32_t x, int32_t y, int32_t z, int32_t block){
-	//TODO
+	struct mc_player *cli = *(struct mc_player**)ntwk_peer_get_data(peer);
+	if(cli->state != 3)
+		return;
+	write_block_change(peer, peer_putchar, x, y, z, block);
 }
 
 void keep_alive47(struct ntwk_peer *peer){

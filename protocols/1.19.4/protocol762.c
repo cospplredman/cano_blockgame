@@ -235,14 +235,22 @@ void disconnect762(struct ntwk_conf *conf, struct ntwk_peer *peer, char *reason)
 }
 
 void teleport762(struct ntwk_peer *peer, int32_t x, int32_t y, int32_t z){
-	//TODO
+	struct mc_player *cli = *(struct mc_player**)ntwk_peer_get_data(peer);
+	if(cli->state != 3)
+		return;
 }
 
 void set_block762(struct ntwk_peer *peer, int32_t x, int32_t y, int32_t z, int32_t block){
-	//TODO
+	struct mc_player *cli = *(struct mc_player**)ntwk_peer_get_data(peer);
+	if(cli->state != 3)
+		return;
+	write_block_update(peer, peer_putchar, x, y, z, block);
 }
 
 void keep_alive762(struct ntwk_peer *peer){
+	struct mc_player *cli = *(struct mc_player**)ntwk_peer_get_data(peer);
+	if(cli->state != 3)
+		return;
 	write_keep_alive(peer, peer_putchar, rand());
 }
 

@@ -51,3 +51,12 @@ WRITE_ALL(disconnect, (struct mc_string reason),
 	(VarInt, 0x40)
 	(mc_string, reason)
 )
+
+WRITE_ALL(block_change, (int32_t x, int32_t y, int32_t z, int32_t block),
+	(VarInt, 0x35)
+	(int32_t, x)
+	(uint8_t, y)
+	(int32_t, z)
+	(uint16_t, block)
+	(uint8_t, 0) //metadata
+)

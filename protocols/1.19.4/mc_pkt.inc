@@ -139,3 +139,9 @@ WRITE_ALL(center_chunk, (int32_t x, int32_t z),
 	(VarInt, x)
 	(VarInt, z)
 )
+
+WRITE_ALL(block_update, (int32_t x, int32_t y, int32_t z, int32_t block),
+	(VarInt, 0x0a)
+	(uint64_t, ((uint64_t)x << 38) + ((uint64_t)z << 12) + y)
+	(VarInt, block)
+)
